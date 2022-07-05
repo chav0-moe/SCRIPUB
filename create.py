@@ -2,8 +2,10 @@
 
 from carta.session import Session
 from carta.browser import Chrome
+import sys
 
-imagePath = "/Users/tangwashihepo/Desktop/VecLib/WFPC2u5780205r_c0fx.fits.txt"
+
+imagePath = sys.argv[1]
 
 session = Session.start_and_create(Chrome())
 
