@@ -1,0 +1,17 @@
+.spatial-profiler-settings {
+    margin: 20px;
+
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+        .bp3-input {
+            width: 88px;
+        }
+    }
+
+    .bp3-form-group .bp3-label {
+        width: 10em;
+        text-align: left;
+    }
+}

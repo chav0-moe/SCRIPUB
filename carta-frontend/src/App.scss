@@ -1,0 +1,71 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.bp3-dark {
+    background-color: $dark-gray4;
+}
+
+body {
+    &.bp3-dark {
+        background-color: $dark-gray4;
+    }
+}
+
+// TODO: Determine if the hard-coded z-index settings can be reduced or removed
+.App {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -100;
+    user-select: none;
+    .bp3-dark {
+        background-color: $dark-gray3;
+    }
+}
+
+.gl-container-app {
+    position: absolute;
+    top: 48px;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    z-index: -100;
+}
+
+.minimal-dialog-backdrop {
+    background-color: rgba(black, 0.1) !important;
+}
+
+.bp3-overlay {
+    z-index: 995 !important;
+}
+
+.bp3-popover {
+    z-index: 995 !important;
+}
+
+.bp3-transition-container {
+    z-index: 995 !important;
+}
+
+.bp3-dialog.bp3-alert {
+    z-index: 999 !important;
+}
+
+.dialog-portal {
+    z-index: 990 !important;
+}
+
+// Workaround for BlueprintJS bug
+.bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-popover-wrapper:not(:last-child) .bp3-button,
+.bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-button:not(:last-child) {
+    margin-right: -1px !important;
+}
+
+// hide plotly tips
+body {
+    div.plotly-notifier {
+        visibility: hidden;
+    }
+}

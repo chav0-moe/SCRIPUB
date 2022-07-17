@@ -1,0 +1,48 @@
+.line-settings-panel {
+    width: 100%;
+    margin-top: 10px;
+
+    .bp3-tab-panel {
+        height: 22em;
+        overflow: auto;
+        width: 100%;
+    }
+
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+        .bp3-label {
+            width: 10em;
+
+            .line-label {
+                max-width: calc(100% - 80px);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
+        }
+    }
+
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 60px;
+        }
+    }
+
+    .line-boundary {
+        .bp3-input-group {
+            input {
+                width: 10em;
+            }
+        }
+    }
+
+    .reset-range-content {
+        .reset-range-button {
+            width: 10em;
+        }
+    }
+}
