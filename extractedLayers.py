@@ -1,7 +1,8 @@
 class ExtractedLayers:
     
-    def __init__(self, background_raster, title, grid, border, axes, numbers, beams, labels):
+    def __init__(self, background_raster, contours, title, grid, border, axes, numbers, beams, labels):
         self.background_raster = background_raster
+        self.contours = contours
         self.title = title
         self.grid = grid
         self.border = border

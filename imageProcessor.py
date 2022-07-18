@@ -46,46 +46,62 @@ class ImageProcessor:
 
         #Store variable for the background raster image
         backgroundImg = sessionObj.active_frame()
-
-        #sessionObj.save_rendered_view("background_raster.png")
-
+        sessionObj.save_rendered_view("background_raster.png")
         img.hide_raster()
 
+        #Contours
         img.show_contours()
+        contours = sessionObj.active_frame()
         sessionObj.save_rendered_view("contours.png")
         img.hide_contours()
         
+        #Title
         if dick['Title'] != 0:
             sessionObj.show(Overlay.TITLE)
+            title = sessionObj.active_frame()
             sessionObj.save_rendered_view("title.png")
             sessionObj.hide(Overlay.TITLE)
 
-        if dick['Grid'] != 0:
+        #Grid
+        elif dick['Grid'] != 0:
             sessionObj.show(Overlay.GRID)
+            grid = sessionObj.active_frame()
             sessionObj.save_rendered_view("grid.png")
             sessionObj.hide(Overlay.GRID)
 
-        if dick['Border'] != 0:
+        #Border
+        elif dick['Border'] != 0:
             sessionObj.show(Overlay.BORDER)
+            border = sessionObj.active_frame()
             sessionObj.save_rendered_view("border.png")
             sessionObj.hide(Overlay.BORDER)
 
-        if dick['Axes'] != 0:
+        #Axes
+        elif dick['Axes'] != 0:
             sessionObj.show(Overlay.AXES)
+            axes = sessionObj.active_frame()
             sessionObj.save_rendered_view("axes.png")
             sessionObj.hide(Overlay.AXES)
 
-        if dick['Numbers'] != 0:
+        #Numbers
+        elif dick['Numbers'] != 0:
             sessionObj.show(Overlay.NUMBERS)
+            numbers = sessionObj.active_frame()
             sessionObj.save_rendered_view("numbers.png")
             sessionObj.hide(Overlay.NUMBERS)
 
-        if dick['Beam'] != 0:
+        #Beam
+        elif dick['Beam'] != 0:
             sessionObj.show(Overlay.BEAM)
+            beam = sessionObj.active_frame()
             sessionObj.save_rendered_view("beam.png")
             sessionObj.hide(Overlay.BEAM)
 
-        if dick['Labels'] != 0:
+        #Labels
+        elif dick['Labels'] != 0:
             sessionObj.show(Overlay.LABELS)
+            labels = sessionObj.active_frame()
             sessionObj.save_rendered_view("labels.png")
             sessionObj.hide(Overlay.LABELS)
+
+        
