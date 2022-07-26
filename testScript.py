@@ -7,4 +7,6 @@ img = session.open_image("/Users/tangwashihepo/Desktop/VecLib/WFPC2u5780205r_c0f
 
 extracted_layers = processor(session)
 
+print(extracted_layers)
+
 

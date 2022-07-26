@@ -43,7 +43,7 @@ def processor(session):
     if visible['ColorBar']:
         session.hide(Overlay.COLORBAR)
 
-    session.call_overlay_action("overlayStore.ticks.setWidth", 0.0001)
+    session.call_overlay_action(Overlay.TICKS,"setWidth", 0.0001)
 
     #TODO create a list to add elements into
     layers = []
@@ -120,9 +120,9 @@ def processor(session):
         session.hide(Overlay.LABELS)
 
     #Ticks
-    ticks = session.call_action("overlayStore.ticks.setWidth", visible['Ticks'])
-    layers.append(ticks)
-
-    layers
+    if visible['Ticks']:
+        ticksWidth = visible['Ticks']
+        ticks = session.call_overlay_action(Overlay.TICKS,"setWidth", ticksWidth)
+        layers.append(ticks)
 
     return layers
