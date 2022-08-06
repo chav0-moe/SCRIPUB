@@ -2,10 +2,17 @@
 
 from carta.constants import Overlay
 
+overlay_components=[Overlay.TITLE, Overlay.GRID, Overlay.BORDER, Overlay.AXES, Overlay.NUMBERS, Overlay.BEAM, Overlay.LABELS, Overlay.COLORBAR, Overlay.TICKS]
 
 def processor(session):
-    #TODO create a list of overlay elements to help with iteration
 
+    visible = []
+
+    for overlayCom in overlay_components:
+        if visible(overlayCom):
+            visible.append(overlayCom)
+
+            
     #Dictionary to store the layers
     visible = {'Title': session.get_overlay_value(Overlay.TITLE,"overlaystore.title"), 'Grid': session.get_overlay_value(Overlay.GRID,"overlaystore.grid"), 'Border': session.get_overlay_value(Overlay.BORDER, "overlaystore.border"), 'Axes': session.get_overlay_value(Overlay.AXES, "overlaystore.axes"), 'Numbers': session.get_overlay_value(Overlay.NUMBERS, "overlaystore.numbers"), 'Labels': session.get_overlay_value(Overlay.LABELS, "overlaystore.labels"), 'Beam': session.get_overlay_value(Overlay.BEAM, "overlaystore.beam"), 'Ticks': session.get_overlay_value(Overlay.TICKS, "overlaystore.ticks"), 'ColorBar': session.get_overlay_value(Overlay.COLORBAR, "overlaystore.colorbar")}
     #TODO explore other components contained within the colorbar
@@ -18,30 +25,8 @@ def processor(session):
 
     img.hide_contours()
 
-        
-    if visible['Title']:
-        session.hide(Overlay.TITLE)
-
-    if visible['Grid']:
-        session.hide(Overlay.GRID)
-
-    if visible['Border']:
-        session.hide(Overlay.BORDER)
-
-    if visible['Axes']:
-        session.hide(Overlay.AXES)
-
-    if visible['Numbers']:
-        session.hide(Overlay.NUMBERS)
-
-    if visible['Beam']:
-        session.hide(Overlay.BEAM)
-
-    if visible['Labels']:
-        session.hide(Overlay.LABELS)
-
-    if visible['ColorBar']:
-        session.hide(Overlay.COLORBAR)
+    for component in overlay_components:
+        session.hide(component)
 
     session.call_overlay_action(Overlay.TICKS,"setWidth", 0.0001)
 
