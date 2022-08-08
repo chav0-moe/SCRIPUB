@@ -2,112 +2,75 @@
 
 from carta.constants import Overlay
 
-overlay_components=[Overlay.TITLE, Overlay.GRID, Overlay.BORDER, Overlay.AXES, Overlay.NUMBERS, Overlay.BEAM, Overlay.LABELS, Overlay.COLORBAR, Overlay.TICKS]
+class Layers:
+    
+    def processor(session):
+        
+        #List of overlay components derived from overlaysores class
+        overlay_components = [Overlay.TITLE, Overlay.GRID, Overlay.BORDER, Overlay.AXES, Overlay.NUMBERS, Overlay.BEAM, Overlay.LABELS, Overlay.COLORBAR, Overlay.TICKS]
 
-def processor(session):
+        #List to keep track of all the visible elements within the active session
+        visible = []
 
-    visible = []
-
-    for overlayCom in overlay_components:
-        if visible(overlayCom):
-            visible.append(overlayCom)
+        #Loops through the component list to check which of the components are visible
+        for overlayCom in overlay_components:
+            if visible(overlayCom):
+                visible.append(overlayCom)
 
             
-    #Dictionary to store the layers
-    visible = {'Title': session.get_overlay_value(Overlay.TITLE,"overlaystore.title"), 'Grid': session.get_overlay_value(Overlay.GRID,"overlaystore.grid"), 'Border': session.get_overlay_value(Overlay.BORDER, "overlaystore.border"), 'Axes': session.get_overlay_value(Overlay.AXES, "overlaystore.axes"), 'Numbers': session.get_overlay_value(Overlay.NUMBERS, "overlaystore.numbers"), 'Labels': session.get_overlay_value(Overlay.LABELS, "overlaystore.labels"), 'Beam': session.get_overlay_value(Overlay.BEAM, "overlaystore.beam"), 'Ticks': session.get_overlay_value(Overlay.TICKS, "overlaystore.ticks"), 'ColorBar': session.get_overlay_value(Overlay.COLORBAR, "overlaystore.colorbar")}
-    #TODO explore other components contained within the colorbar
+        #TODO explore other components contained within the colorbar
 
-    #Store variable for image in current session
-    img = session.active_frame()
+        #Store variable for image in current session
+        img = session.active_frame()
         
 
-    #TODO use if statements to check if the added elements are visible
-
-    img.hide_contours()
-
-    for component in overlay_components:
-        session.hide(component)
-
-    session.call_overlay_action(Overlay.TICKS,"setWidth", 0.0001)
-
-    #TODO create a list to add elements into
-    layers = []
-    #TODO create a list where the visible elements can be mapped to the exsisting ones
-
-    #Store variable for the background raster image
-    #TODO have some form of flag to distingush between the elements which need to be vectorised and the raster layers, ideally with the latter first
-    backgroundImg = session.rendered_view_data()
-    layers.append(backgroundImg)
-    #sessionObj.save_rendered_view("background_raster.png")
-    img.hide_raster()
-
-    #Contours
-    img.show_contours()
-    contours = session.rendered_view_data()
-    layers.append(contours)
-    #sessionObj.save_rendered_view("contours.png")
-    img.hide_contours()
         
-    #Title
-    if visible['Title']:
-        session.show(Overlay.TITLE)
-        title = session.rendered_view_data()
-        layers.append(title)
-        #sessionObj.save_rendered_view("title.png")
-        session.hide(Overlay.TITLE)
+        #TODO check if the contours are visible before hiding them
+        img.hide_contours()
 
-    #Grid
-    if visible['Grid']:
-        session.show(Overlay.GRID)
-        grid = session.rendered_view_data()
-        layers.append(grid)
-        #sessionObj.save_rendered_view("grid.png")
-        session.hide(Overlay.GRID)
+        #Loop hides all of the overlay components
+        for component in overlay_components:
+            session.hide(component)
 
-    #Border
-    if visible['Border']:
-        session.show(Overlay.BORDER)
-        border = session.rendered_view_data()
-        layers.append(border)
-        #sessionObj.save_rendered_view("border.png")
-        session.hide(Overlay.BORDER)
+        #TODO get the width of the ticks before setting them to null
+        session.call_overlay_action(Overlay.TICKS,"setWidth", 0.0001)
 
-    #Axes
-    if visible['Axes']:
-        session.show(Overlay.AXES)
-        axes = session.rendered_view_data()
-        layers.append(axes)
-        #sessionObj.save_rendered_view("axes.png")
-        session.hide(Overlay.AXES)
+        #List which is used to store the individual layers
+        layers = []
 
-    #Numbers
-    if visible['Numbers']:
-        session.show(Overlay.NUMBERS)
-        numbers = session.rendered_view_data()
-        layers.append(numbers)
-        #sessionObj.save_rendered_view("numbers.png")
-        session.hide(Overlay.NUMBERS)
 
-    #Beam
-    if visible['Beam']:
-        session.show(Overlay.BEAM)
-        beam = session.rendered_view_data()
-        layers.append(beam)
-        #sessionObj.save_rendered_view("beam.png")
-        session.hide(Overlay.BEAM)
+        #Store variable for the background raster image
+        #TODO have some form of flag to distingush between the elements which need to be vectorised and the raster layers, ideally with the latter first
+        backgroundImg = session.rendered_view_data()
+        layers.append(backgroundImg)
+        #sessionObj.save_rendered_view("background_raster.png")
+        img.hide_raster()
 
-    #Labels
-    if visible['Labels']:
-        session.show(Overlay.LABELS)
-        labels = session.rendered_view_data()
-        layers.append(labels)
-        #sessionObj.save_rendered_view("labels.png")
-        session.hide(Overlay.LABELS)
+        #Contours
+        img.show_contours()
+        contours = session.rendered_view_data()
+        layers.append(contours)
+        #sessionObj.save_rendered_view("contours.png")
+        img.hide_contours()
 
-    #Ticks
-    if visible['Ticks']:
-        ticksWidth = visible['Ticks']
-        ticks = session.call_overlay_action(Overlay.TICKS,"setWidth", ticksWidth)
-        layers.append(ticks)
+        #Function saves the overlay components
+        def saveLayer(overlayComponent, sessionObj, layerList):
+            sessionObj.show(overlayComponent)
+            sessionObj.set_color("black", overlayComponent)
+            layerList.append(sessionObj.rendered_view_data())
+            #sessionObj.save_rendered_view("labels.png")
+            sessionObj.hide(overlayComponent)
 
-    return layers
+        #Loop used to show the overlay components individually and then hide them once they have been added to the list in byte format
+        for component in overlay_components:
+            saveLayer(component, session, layers)
+
+        #Ticks
+        if visible['Ticks']:
+            ticksWidth = visible['Ticks']
+            ticks = session.call_overlay_action(Overlay.TICKS,"setWidth", ticksWidth)
+            layers.append(ticks)
+
+        return layers
+
+    
