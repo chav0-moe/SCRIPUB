@@ -15,7 +15,7 @@ class Layers:
     #List for original colors of each component
     originalColor = []
     
-    def processor(session):
+    def from_carta(session):
         
         
         overlay_components = [Overlay.TITLE, Overlay.GRID, Overlay.BORDER, Overlay.AXES, Overlay.NUMBERS, Overlay.BEAM, Overlay.LABELS, Overlay.COLORBAR]
