@@ -23,9 +23,14 @@ class final_create():
 
     @classmethod
     def data2pil(self, data):                       #Converts datauri to a PIL image
-        # Assuming base64_str is the string value without 'data:image/jpeg;base64,'
+        #Assuming base64_str is the string value without 'data:image/jpeg;base64,'
         img = Image.open(io.BytesIO(base64.decodebytes(bytes(data, "utf-8"))))
         return img
+
+    #@classmethod
+    #def rgb2hex(self, rgb_tuple):
+        #r, g, b = rgb_tuple
+        #return "#{:02x}{:02x}{:02x}".format(r,g,b)
 
     @classmethod
     def get_background_xml(self, background_arr):       #Creates xml code for the png images to be embedded into the svg image
@@ -50,9 +55,14 @@ class final_create():
             )
             parts = []
             
-            for img in vect_img_arr:
-                for curve in img.path:
+            for image in vect_img_arr:
+                for curve in image.path:
                     fs = curve.start_point
+                    #print (fs.x)
+                    #print (fs.y)
+                    #pixel_colour = image.img.getpixel((fs.x, fs.y))[0:3]
+                    #hex_value = final_create.rgb2hex(pixel_colour)
+                    #print (hex_value)
                     parts.append("M%f,%f" % (fs.x, fs.y))
                     for segment in curve.segments:
                         if segment.is_corner:
@@ -67,7 +77,8 @@ class final_create():
                             parts.append("C%f,%f %f,%f %f,%f" % (a.x, a.y, b.x, b.y, c.x, c.y))
                     parts.append("z")
                 parts.append("--endOfPath--")
-                parts.append(img.colour)
+                parts.append(image.colour)
+                #parts.append(hex_value)
             
             x = 0
             paths_to_write = ""
@@ -95,11 +106,12 @@ class final_create():
     
             ########################################################### -- Testing code. Tangwa's code will be placed here
             #Three arrays are to be generated here: One for the background images, one for the foreground images that are to be vectorized, and another that contains the colour value of those foreground images
-  
+            #The foreground and colour arrays can be combined into a single object for simpler code
+            
             back_arr = []
-            img_array = []
-            before_vect_array = []
-            colour_array = []
+            #before_vect_array = []
+            #colour_array = []
+            vect_img_arr = []
             threads = []
             
             back = Image.open('Complex_raster.png')
@@ -108,63 +120,79 @@ class final_create():
             
             im = Image.open('Complex_Contour.png')
             im2 = Image.open('Simple_Contours.png')
-            im3 = Image.open('C2.png')
-            im4 = Image.open('C3.png')
-            im5 = Image.open('C4.png')
-            im6 = Image.open('C5.png')
-            im7 = Image.open('C6.png')
-            im8 = Image.open('C7.png')
-            im9 = Image.open('C8.png')
+            im3 = Image.open('Complex_Contour.png')
+            im4 = Image.open('Complex_Contour.png')
+            im5 = Image.open('Complex_Contour.png')
+            #im6 = Image.open('C5.png')
+            #im7 = Image.open('C6.png')
+            #im8 = Image.open('C7.png')
+            #im9 = Image.open('C8.png')
             
-            #img = vect_img(im, '#00ba37')
-            #img2 = vect_img(im2, 'red')
-            #img3 = vect_img(im3, 'red')
-            #img4 = vect_img(im4, 'red')
-            #img5 = vect_img(im5, 'red')
+            img = vect_img(im, '#00ba37')
+            img2 = vect_img(im2, 'red')
+            img3 = vect_img(im3, 'red')
+            img4 = vect_img(im4, 'red')
+            img5 = vect_img(im5, 'red')
             #img6 = vect_img(im6, 'red')
             #img7 = vect_img(im7, 'red')
             #img8 = vect_img(im8, 'red')
             #img9 = vect_img(im9, 'red')
+
+            vect_img_arr.append(img)
+            vect_img_arr.append(img2)
+            vect_img_arr.append(img3)
+            vect_img_arr.append(img4)
+            vect_img_arr.append(img5)
+            
+            
+            
             
             #back_arr.append(back2)
             #img_array.append(img)
             #img_array.append(img2)
             
-            before_vect_array.append(im)
-            before_vect_array.append(im2)
-            before_vect_array.append(im3)
-            before_vect_array.append(im4)
-            before_vect_array.append(im5)
-            before_vect_array.append(im6)
-            before_vect_array.append(im7)
-            before_vect_array.append(im8)
-            before_vect_array.append(im9)
+            #before_vect_array.append(im)
             
-            colour_array.append('#00ba37')
-            colour_array.append('#00ba37')
-            colour_array.append('red')
-            colour_array.append('red')
-            colour_array.append('red')
-            colour_array.append('red')
-            colour_array.append('red')
-            colour_array.append('red')
-            colour_array.append('red')
+            #before_vect_array.append(im2)
+            #before_vect_array.append(im3)
+            #before_vect_array.append(im4)
+            #before_vect_array.append(im5)
+            #before_vect_array.append(im6)
+            #before_vect_array.append(im7)
+            #before_vect_array.append(im8)
+            #before_vect_array.append(im9)
+            
+            #colour_array.append('#00ba37')
+            
+            #colour_array.append('#00ba37')
+            #colour_array.append('red')
+            #colour_array.append('red')
+            #colour_array.append('red')
+            #colour_array.append('red')
+            #colour_array.append('red')
+            #colour_array.append('red')
+            #colour_array.append('red')
             
             ###########################################################
             
             start_time = perf_counter()
             
-            for n in range(0, len(before_vect_array)):
-                t = Thread(target=final_create.populate_array, args=(before_vect_array[n],colour_array[n],))
+            #for n in range(0, len(before_vect_array)):
+                #t = Thread(target=final_create.populate_array, args=(before_vect_array[n],colour_array[n],))
+                #threads.append(t)
+                #t.start()
+                #print('new thread started')
+            
+            for vec in vect_img_arr:
+                t = Thread(target=vec.get_path)
                 threads.append(t)
                 t.start()
-                print('new thread started')
             
             for t in threads:
                 t.join()
             
             end_time = perf_counter()
-            print(f'It took {end_time- start_time: 0.2f} second(s) to complete.')
+            print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
     
             final_create.create('created_vector.svg', back_arr, final_create.vect_array)
     
