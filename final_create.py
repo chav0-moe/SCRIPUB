@@ -2,14 +2,12 @@ from carta.session import Session
 from io import BytesIO
 import io
 import base64
-from vect_img import vect_img
+from raw_img import raw_img
 from PIL import Image
 from threading import Thread
 from time import sleep, perf_counter
 
 class final_create():
-    
-    vect_array = []
 
     @classmethod
     def pil2data(self, img):                          #Converts PIL image to datauri
@@ -20,7 +18,6 @@ class final_create():
         #return u'data:img/png;base64,'+data64.decode('utf-8')
         return data64.decode('utf-8')
         
-
     @classmethod
     def data2pil(self, data):                       #Converts datauri to a PIL image
         #Assuming base64_str is the string value without 'data:image/jpeg;base64,'
@@ -36,12 +33,20 @@ class final_create():
     def get_background_xml(self, background_arr):       #Creates xml code for the png images to be embedded into the svg image
         xml_lines = ""
         for back_img in background_arr:
-            back_data = final_create.pil2data(back_img)
+            back_data = final_create.pil2data(back_img.img)
             xml_lines = xml_lines + '<image xlink:href="'+u'data:img/png;base64,'+back_data+'" width="100%" height="100%" class="bg-image"/> \n'
         return xml_lines
 
     @classmethod
-    def create(self, output, background_arr, vect_img_arr):     #Pass an output file name, a background image array (PIL images), and an array of vect_img objects to be vectorized and combined
+    def create(self, output, img_arr):     #Pass an output file name, a background image array (PIL images), and an array of vect_img objects to be vectorized and combined
+        back_arr = []
+        vect_arr = []
+        for img in img_arr:
+            if img.bool_trace == True:
+                vect_arr.append(img)
+            if img.bool_trace == False:
+                back_arr.append(img)
+        
         with open(output, "w") as fp:
             fp.write(
                 '<svg version="1.1"' +
@@ -50,12 +55,12 @@ class final_create():
                 ' width="%d" height="%d"' % (6824, 3600) +
                 ' viewBox="0 0 %d %d">' % (6824, 3600) +
                 '\n' +
-                final_create.get_background_xml(background_arr)
+                final_create.get_background_xml(back_arr)
                 
             )
             parts = []
             
-            for image in vect_img_arr:
+            for image in vect_arr:
                 for curve in image.path:
                     fs = curve.start_point
                     #print (fs.x)
@@ -94,10 +99,6 @@ class final_create():
                 
             fp.write("</svg>")
             
-    @classmethod
-    def populate_array(self, image, colour):
-        vect = vect_img(image, colour)
-        final_create.vect_array.append(vect)
         
     
     @classmethod
@@ -108,85 +109,36 @@ class final_create():
             #Three arrays are to be generated here: One for the background images, one for the foreground images that are to be vectorized, and another that contains the colour value of those foreground images
             #The foreground and colour arrays can be combined into a single object for simpler code
             
-            back_arr = []
-            #before_vect_array = []
-            #colour_array = []
-            vect_img_arr = []
+            #back_arr = []
+            #vect_img_arr = []
+            image_arr = []
             threads = []
             
             back = Image.open('Complex_raster.png')
-            back_arr.append(back)
+            image_arr.append(raw_img(False, back, None))
+            #back_arr.append(back)
             #back2 = Image.open('map_scale.png')
             
             im = Image.open('Complex_Contour.png')
-            im2 = Image.open('Simple_Contours.png')
-            im3 = Image.open('Complex_Contour.png')
-            im4 = Image.open('Complex_Contour.png')
-            im5 = Image.open('Complex_Contour.png')
-            #im6 = Image.open('C5.png')
-            #im7 = Image.open('C6.png')
-            #im8 = Image.open('C7.png')
-            #im9 = Image.open('C8.png')
+            #im2 = Image.open('Simple_Contours.png')
             
-            img = vect_img(im, '#00ba37')
-            img2 = vect_img(im2, 'red')
-            img3 = vect_img(im3, 'red')
-            img4 = vect_img(im4, 'red')
-            img5 = vect_img(im5, 'red')
-            #img6 = vect_img(im6, 'red')
-            #img7 = vect_img(im7, 'red')
-            #img8 = vect_img(im8, 'red')
-            #img9 = vect_img(im9, 'red')
+            image_arr.append(raw_img(True, im, '#00ba37'))
+            #img2 = vect_img(im2, 'red')
 
-            vect_img_arr.append(img)
-            vect_img_arr.append(img2)
-            vect_img_arr.append(img3)
-            vect_img_arr.append(img4)
-            vect_img_arr.append(img5)
-            
-            
-            
-            
-            #back_arr.append(back2)
-            #img_array.append(img)
-            #img_array.append(img2)
-            
-            #before_vect_array.append(im)
-            
-            #before_vect_array.append(im2)
-            #before_vect_array.append(im3)
-            #before_vect_array.append(im4)
-            #before_vect_array.append(im5)
-            #before_vect_array.append(im6)
-            #before_vect_array.append(im7)
-            #before_vect_array.append(im8)
-            #before_vect_array.append(im9)
-            
-            #colour_array.append('#00ba37')
-            
-            #colour_array.append('#00ba37')
-            #colour_array.append('red')
-            #colour_array.append('red')
-            #colour_array.append('red')
-            #colour_array.append('red')
-            #colour_array.append('red')
-            #colour_array.append('red')
-            #colour_array.append('red')
+            #vect_img_arr.append(img)
+            #vect_img_arr.append(img2)
             
             ###########################################################
             
             start_time = perf_counter()
             
-            #for n in range(0, len(before_vect_array)):
-                #t = Thread(target=final_create.populate_array, args=(before_vect_array[n],colour_array[n],))
-                #threads.append(t)
-                #t.start()
-                #print('new thread started')
             
-            for vec in vect_img_arr:
-                t = Thread(target=vec.get_path)
-                threads.append(t)
-                t.start()
+            for image in image_arr:
+                if image.bool_trace == True:
+                    t = Thread(target=image.get_path)
+                    threads.append(t)
+                    t.start()
+                    print("New thread started")
             
             for t in threads:
                 t.join()
@@ -194,5 +146,5 @@ class final_create():
             end_time = perf_counter()
             print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
     
-            final_create.create('created_vector.svg', back_arr, final_create.vect_array)
+            final_create.create('created_vector.svg',image_arr)
     
