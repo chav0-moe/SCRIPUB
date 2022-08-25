@@ -7,7 +7,9 @@ from PIL import Image
 from threading import Thread
 from time import sleep, perf_counter
 import numpy as np
-import cv2
+#import cv2
+from layers import Layers
+from base64 import decodestring
 
 ##Change names and change self to cls
 class combined_img():
@@ -19,42 +21,58 @@ class combined_img():
     def pil2data(cls, img):                          #Converts PIL image to datauri
         data = BytesIO()
         img.save(data, "PNG")
+        print(type(data))
         data64 = base64.b64encode(data.getvalue())
         #return u'data:img/png;base64,'+data64.decode('utf-8')
         return data64.decode('utf-8')
         
     @classmethod
     def data2pil(cls, data):                       #Converts datauri to a PIL image
-        #image = Image.open(io.BytesIO(bytes(data, encoding='utf-8')))
         
-        #im_bytes = base64.b64encode(bytes(data, encoding = 'utf-8'))   # im_bytes is a binary image
-        w = 10
-        h = 10
+        print(type(data))
+        #print(data)
+        #new = data.encode('utf-8')
+        #print(type(new))
         
-        im_bytes = base64.b64decode(bytes(data, encoding = 'utf-8'))
-        print(im_bytes)
-        img = Image.frombytes("RGB", (w, h), im_bytes)
-        img.save("here.png")
-        name = bytes(data, encoding = 'utf-8')
-        #im = Image.frombuffer("I;16", (5, 10), im_bytes, "raw", "I;12")
-        #im.save("here2.png")
-        im_stream = io.BytesIO(im_bytes)  # convert image to file-like object
+        #encoded = base64.b64encode(data)
+        #print(encoded)
+        
+        #im_bytes = base64.b64decode(data)
+        #print(type(im_bytes))
+        
+        im_stream = io.BytesIO(data)
+        #im_stream = io.BytesIO(im_bytes)    # convert image to file-like object
+        print(type(im_stream))
+ 
         img = Image.open(im_stream)   # img is now PIL Image object
+        print(type(img))
+        
+        #other_image = cls.pil2data(img)
+        #other_image = other_image.save("other_image.png")
+        
+        #img = img.save("Here1234.png")
+        #print("Image saved")
         return img
         
     @classmethod
     def get_background_xml(cls, background_arr):       #Creates xml code for the png images to be embedded into the svg image
         xml_lines = ""
         for back_img in background_arr:
+            
+            print("In background xml now")
+            print(type(back_img.img))
+            
             back_data = cls.pil2data(back_img.img)
             xml_lines = xml_lines + '<image xlink:href="'+u'data:img/png;base64,'+back_data+'" width="100%" height="100%" class="bg-image"/> \n'
+            
+            print(xml_lines)
+        
         return xml_lines
 
-        ##That returns the xml lines, get img_arr as instance
-    def to_svg(cls, file_name):     #Pass an output file name, a background image array (PIL images), and an array of vect_img objects to be vectorized and combined
+    def to_svg(self, file_name):     #Pass an output file name, a background image array (PIL images), and an array of vect_img objects to be vectorized and combined
         back_arr = []
         vect_arr = []
-        for img in cls.image_array:
+        for img in self.image_array:
             if img.bool_trace == True:
                 vect_arr.append(img)
             if img.bool_trace == False:
@@ -68,7 +86,7 @@ class combined_img():
                 ' width="%d" height="%d"' % (6824, 3600) +
                 ' viewBox="0 0 %d %d">' % (6824, 3600) +
                 '\n' +
-                cls.get_background_xml(back_arr)
+                self.get_background_xml(back_arr)
                 
             )
             parts = []
@@ -109,8 +127,39 @@ class combined_img():
             
         
     @classmethod
-    #def from_session(self, session):  #Method that fetches the images from the session and stores them in an array of vect_img objects
-    def from_session(cls): ##Call init at the end and return instance of this class
+    def from_session(cls, session):  #Method that fetches the images from the session and stores them in an array of vect_img objects
+        image_arr = []
+        threads = []
+        layers = Layers.from_carta(session)
+        
+        back = cls.data2pil(layers.rasterList[0])
+        print(type(back))
+        image_arr.append(raw_img(False, back, None))
+        #for image in layers.rasterList:
+            #image_arr.append(raw_img(False, image, None))
+        
+        #for image in layers.vectorList:
+            #image_arr.append(raw_img(True, image, '#00ba37'))
+        
+        start_time = perf_counter()
+        for image in image_arr:
+                if image.bool_trace == True:
+                    t = Thread(target=image.get_path)
+                    threads.append(t)
+                    t.start()
+                    print("New thread started")
+            
+        for t in threads:
+            t.join()
+            
+        end_time = perf_counter()
+        print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
+
+        inst = cls(image_arr)
+        return inst
+    
+    @classmethod
+    def original_from_session(cls): 
     
             ########################################################### -- Testing code. Tangwa's code will be placed here
             
@@ -135,10 +184,7 @@ class combined_img():
             #vect_img_arr.append(img2)
             
             ###########################################################
-            
             start_time = perf_counter()
-            
-            
             for image in image_arr:
                 if image.bool_trace == True:
                     t = Thread(target=image.get_path)
@@ -152,10 +198,9 @@ class combined_img():
             end_time = perf_counter()
             print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
 
-            inst = combined_img(image_arr)
+            inst = cls(image_arr)
             return inst
-    
-    
+   
     @classmethod    
     #This method is just to test some code
     def from_2(cls):    
