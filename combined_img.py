@@ -9,7 +9,6 @@ from time import sleep, perf_counter
 import numpy as np
 #import cv2
 from layers import Layers
-from base64 import decodestring
 
 ##Change names and change self to cls
 class combined_img():
@@ -18,40 +17,23 @@ class combined_img():
         cls.image_array = image_array
     
     @classmethod
+    def remove_transparency(cls, im):
+        new_img = Image.new('RGBA', im.size, (255,255,255))
+        new_img.paste(im, (0, 0), im)
+        return new_img
+    
+    @classmethod
     def pil2data(cls, img):                          #Converts PIL image to datauri
         data = BytesIO()
         img.save(data, "PNG")
-        print(type(data))
         data64 = base64.b64encode(data.getvalue())
         #return u'data:img/png;base64,'+data64.decode('utf-8')
         return data64.decode('utf-8')
         
     @classmethod
-    def data2pil(cls, data):                       #Converts datauri to a PIL image
-        
-        print(type(data))
-        #print(data)
-        #new = data.encode('utf-8')
-        #print(type(new))
-        
-        #encoded = base64.b64encode(data)
-        #print(encoded)
-        
-        #im_bytes = base64.b64decode(data)
-        #print(type(im_bytes))
-        
-        im_stream = io.BytesIO(data)
-        #im_stream = io.BytesIO(im_bytes)    # convert image to file-like object
-        print(type(im_stream))
- 
+    def data2pil(cls, data):                       #Converts datauri to a PIL image       
+        im_stream = io.BytesIO(data)    # convert image to file-like object 
         img = Image.open(im_stream)   # img is now PIL Image object
-        print(type(img))
-        
-        #other_image = cls.pil2data(img)
-        #other_image = other_image.save("other_image.png")
-        
-        #img = img.save("Here1234.png")
-        #print("Image saved")
         return img
         
     @classmethod
@@ -59,13 +41,8 @@ class combined_img():
         xml_lines = ""
         for back_img in background_arr:
             
-            print("In background xml now")
-            print(type(back_img.img))
-            
             back_data = cls.pil2data(back_img.img)
             xml_lines = xml_lines + '<image xlink:href="'+u'data:img/png;base64,'+back_data+'" width="100%" height="100%" class="bg-image"/> \n'
-            
-            print(xml_lines)
         
         return xml_lines
 
@@ -83,8 +60,12 @@ class combined_img():
                 '<svg version="1.1"' +
                 ' xmlns="http://www.w3.org/2000/svg"' +
                 ' xmlns:xling="http://www.w3.org/1999/xlink"' +
-                ' width="%d" height="%d"' % (6824, 3600) +
-                ' viewBox="0 0 %d %d">' % (6824, 3600) +
+                #' width="%d" height="%d"' % (6824, 3600) +
+                ' viewBox="0 0 %d %d">' % (1140, 510) +
+                #' width="%d" height="%d" y="0", x="0"' % (6824, 3600) +
+                #' viewBox="0 0 %d %d">' % (6000, 3000) +
+                #' width="100%" height="100%" viewBox="0 0 6824 3600">'
+                
                 '\n' +
                 self.get_background_xml(back_arr)
                 
@@ -132,14 +113,30 @@ class combined_img():
         threads = []
         layers = Layers.from_carta(session)
         
-        back = cls.data2pil(layers.rasterList[0])
-        print(type(back))
-        image_arr.append(raw_img(False, back, None))
-        #for image in layers.rasterList:
-            #image_arr.append(raw_img(False, image, None))
+        for colour in layers.originalColor:
+            print(colour)
         
-        #for image in layers.vectorList:
-            #image_arr.append(raw_img(True, image, '#00ba37'))
+        #back = cls.data2pil(layers.rasterList[0])
+        #print(type(back))
+        #image_arr.append(raw_img(False, back, None))
+
+        
+        #x = 0
+        for image in layers.rasterList:
+            #print("Checking new raster layer")
+            pil_format = cls.data2pil(image)
+            image_arr.append(raw_img(False, pil_format, None))
+            #pil_format.save("Raster_Image_nr"+str(x)+".png")
+            #x = x+1
+        
+        #x = 0
+        for image in layers.vectorList:
+            #print("Checking new vector layer")
+            pil_format = cls.data2pil(image)
+            vectorizable = cls.remove_transparency(pil_format)
+            image_arr.append(raw_img(True, vectorizable, '#00ba37'))
+            #vectorizable.save("Vector_Image_nr"+str(x)+".png")
+            #x = x+1
         
         start_time = perf_counter()
         for image in image_arr:
@@ -168,20 +165,21 @@ class combined_img():
             image_arr = []
             threads = []
             
-            back = Image.open('Complex_raster.png')
+            #back = Image.open('Complex_raster.png')
             
-            image_arr.append(raw_img(False, back, None))
+            #image_arr.append(raw_img(False, back, None))
             #back_arr.append(back)
             #back2 = Image.open('map_scale.png')
             
-            im = Image.open('Complex_Contour.png')
+            #im = Image.open('Complex_Contour.png')
             #im2 = Image.open('Simple_Contours.png')
             
-            image_arr.append(raw_img(True, im, '#00ba37'))
+            #image_arr.append(raw_img(True, im, '#00ba37'))
             #img2 = vect_img(im2, 'red')
 
             #vect_img_arr.append(img)
             #vect_img_arr.append(img2)
+            
             
             ###########################################################
             start_time = perf_counter()
