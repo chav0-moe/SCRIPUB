@@ -15,6 +15,13 @@ class combined_img():
 
     def __init__(cls, image_array):
         cls.image_array = image_array
+        
+    @classmethod
+    def resize(cls, im):
+        width, height = im.size
+        newsize = (width*5, height*5)
+        new_img = im.resize(newsize)
+        return new_img
     
     @classmethod
     def remove_transparency(cls, im):
@@ -60,12 +67,7 @@ class combined_img():
                 '<svg version="1.1"' +
                 ' xmlns="http://www.w3.org/2000/svg"' +
                 ' xmlns:xling="http://www.w3.org/1999/xlink"' +
-                #' width="%d" height="%d"' % (6824, 3600) +
-                ' viewBox="0 0 %d %d">' % (1140, 510) +
-                #' width="%d" height="%d" y="0", x="0"' % (6824, 3600) +
-                #' viewBox="0 0 %d %d">' % (6000, 3000) +
-                #' width="100%" height="100%" viewBox="0 0 6824 3600">'
-                
+                ' viewBox="0 0 %d %d">' % (5690, 2555) +
                 '\n' +
                 self.get_background_xml(back_arr)
                 
@@ -75,6 +77,7 @@ class combined_img():
             for image in vect_arr:
                 for curve in image.path:
                     fs = curve.start_point
+                    #print("Curve start: "+fs.x+" "+fs.y)
                     parts.append("M%f,%f" % (fs.x, fs.y))
                     for segment in curve.segments:
                         if segment.is_corner:
@@ -113,8 +116,8 @@ class combined_img():
         threads = []
         layers = Layers.from_carta(session)
         
-        for colour in layers.originalColor:
-            print(colour)
+        #for colour in layers.originalColor:
+            #print(colour)
         
         #back = cls.data2pil(layers.rasterList[0])
         #print(type(back))
@@ -125,7 +128,8 @@ class combined_img():
         for image in layers.rasterList:
             #print("Checking new raster layer")
             pil_format = cls.data2pil(image)
-            image_arr.append(raw_img(False, pil_format, None))
+            resized_image = cls.resize(pil_format)
+            image_arr.append(raw_img(False, resized_image, None))
             #pil_format.save("Raster_Image_nr"+str(x)+".png")
             #x = x+1
         
@@ -133,7 +137,8 @@ class combined_img():
         for image in layers.vectorList:
             #print("Checking new vector layer")
             pil_format = cls.data2pil(image)
-            vectorizable = cls.remove_transparency(pil_format)
+            resized_image = cls.resize(pil_format)
+            vectorizable = cls.remove_transparency(resized_image)
             image_arr.append(raw_img(True, vectorizable, '#00ba37'))
             #vectorizable.save("Vector_Image_nr"+str(x)+".png")
             #x = x+1
@@ -144,7 +149,7 @@ class combined_img():
                     t = Thread(target=image.get_path)
                     threads.append(t)
                     t.start()
-                    print("New thread started")
+                    #print("New thread started")
             
         for t in threads:
             t.join()
@@ -154,50 +159,6 @@ class combined_img():
 
         inst = cls(image_arr)
         return inst
-    
-    @classmethod
-    def original_from_session(cls): 
-    
-            ########################################################### -- Testing code. Tangwa's code will be placed here
-            
-            #back_arr = []
-            #vect_img_arr = []
-            image_arr = []
-            threads = []
-            
-            #back = Image.open('Complex_raster.png')
-            
-            #image_arr.append(raw_img(False, back, None))
-            #back_arr.append(back)
-            #back2 = Image.open('map_scale.png')
-            
-            #im = Image.open('Complex_Contour.png')
-            #im2 = Image.open('Simple_Contours.png')
-            
-            #image_arr.append(raw_img(True, im, '#00ba37'))
-            #img2 = vect_img(im2, 'red')
-
-            #vect_img_arr.append(img)
-            #vect_img_arr.append(img2)
-            
-            
-            ###########################################################
-            start_time = perf_counter()
-            for image in image_arr:
-                if image.bool_trace == True:
-                    t = Thread(target=image.get_path)
-                    threads.append(t)
-                    t.start()
-                    print("New thread started")
-            
-            for t in threads:
-                t.join()
-            
-            end_time = perf_counter()
-            print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
-
-            inst = cls(image_arr)
-            return inst
    
     @classmethod    
     #This method is just to test some code
