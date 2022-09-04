@@ -6,16 +6,13 @@ from raw_img import raw_img
 from PIL import Image
 from threading import Thread
 from time import sleep, perf_counter
-import numpy as np
-#import cv2
 from layers import Layers
 
-##Change names and change self to cls
 class combined_img():
 
     def __init__(cls, image_array):
         cls.image_array = image_array
-        
+    
     @classmethod
     def resize(cls, im):
         width, height = im.size
@@ -100,6 +97,8 @@ class combined_img():
             while x < len(parts):
                 if parts[x] == "--endOfPath--":
                     x += 1
+                    #print(parts[x])
+                    #print(paths_to_write)
                     fp.write('<path stroke="none" fill="' + parts[x] + '" fill-rule="evenodd" fill-opacity="1" d="%s"/> \n' % (paths_to_write))
                     paths_to_write = ""
                     x += 1
@@ -115,41 +114,27 @@ class combined_img():
         image_arr = []
         threads = []
         layers = Layers.from_carta(session)
-        
-        #for colour in layers.originalColor:
-            #print(colour)
-        
-        #back = cls.data2pil(layers.rasterList[0])
-        #print(type(back))
-        #image_arr.append(raw_img(False, back, None))
 
-        
-        #x = 0
         for image in layers.rasterList:
-            #print("Checking new raster layer")
             pil_format = cls.data2pil(image)
             resized_image = cls.resize(pil_format)
             image_arr.append(raw_img(False, resized_image, None))
-            #pil_format.save("Raster_Image_nr"+str(x)+".png")
-            #x = x+1
         
-        #x = 0
         for image in layers.vectorList:
-            #print("Checking new vector layer")
-            pil_format = cls.data2pil(image)
+            #print(len(layers.vectorList))
+            #print(image.color)
+            pil_format = cls.data2pil(image.data)
             resized_image = cls.resize(pil_format)
             vectorizable = cls.remove_transparency(resized_image)
-            image_arr.append(raw_img(True, vectorizable, '#00ba37'))
-            #vectorizable.save("Vector_Image_nr"+str(x)+".png")
-            #x = x+1
+            image_arr.append(raw_img(True, vectorizable, str(image.color)))
         
         start_time = perf_counter()
         for image in image_arr:
                 if image.bool_trace == True:
                     t = Thread(target=image.get_path)
+                    #print("Created new thread")
                     threads.append(t)
                     t.start()
-                    #print("New thread started")
             
         for t in threads:
             t.join()
