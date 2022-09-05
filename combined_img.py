@@ -15,8 +15,8 @@ class combined_img():
     
     @classmethod
     def resize(cls, im):
-        width, height = im.size
-        newsize = (width*5, height*5)
+        #width, height = im.size
+        newsize = (5690, 2555)
         new_img = im.resize(newsize)
         return new_img
     
