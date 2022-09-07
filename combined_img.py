@@ -73,9 +73,10 @@ class combined_img():
                 self.get_background_xml(back_arr)                                   #Get the background array data and put it in the xml
                 
             )
-            parts = []
-            
-            for image in vect_arr:
+            all_parts =  []
+            for image in vect_arr:                                                  #Loop through the vector path of each image, creating the path defenition "d" for each of them
+                parts = []
+                parts.append(image.colour)
                 for curve in image.path:
                     fs = curve.start_point
                     #print("Curve start: "+fs.x+" "+fs.y)
@@ -92,25 +93,19 @@ class combined_img():
                             c = segment.end_point
                             parts.append("C%f,%f %f,%f %f,%f" % (a.x, a.y, b.x, b.y, c.x, c.y))
                     parts.append("z")
-                parts.append("--endOfPath--")
-                parts.append(image.colour)
-                #parts.append(hex_value)
+                all_parts.append(parts)
             
-            x = 0
-            paths_to_write = ""
-            while x < len(parts):
-                if parts[x] == "--endOfPath--":
-                    x += 1
-                    #print(parts[x])
-                    #print(paths_to_write)
-                    fp.write('<path stroke="none" fill="' + parts[x] + '" fill-rule="evenodd" fill-opacity="1" d="%s"/> \n' % (paths_to_write))
-                    paths_to_write = ""
-                    x += 1
-                else:
-                    paths_to_write = paths_to_write + parts[x]
-                    x += 1
+            
+            paths_to_write = ""                                             #Create the xml code for each individual vector path, colour included
+            for parts in all_parts:
+                colour_value = parts[0]
+                del parts[0]
+                paths_to_write = ""
+                for curr_string in parts:
+                    paths_to_write = paths_to_write + curr_string
                 
-            fp.write("</svg>")
+                fp.write('<path stroke="none" fill="' + colour_value + '" fill-rule="evenodd" fill-opacity="1" d="%s"/> \n' % (paths_to_write))
+            fp.write("</svg>")    
             
         
     @classmethod
@@ -160,74 +155,3 @@ class combined_img():
 
         inst = cls(image_arr, new_width, new_height)
         return inst
-   
-    @classmethod    
-    #This method is just to test some code
-    def from_2(cls):    
-        
-        ########################################## --Reading in of textfiles containing image data
-        raster_file = open("rasterLayers.txt", "r")
-        raster_data = raster_file.read().split(', ')
-        raster_file.close()
-        
-        vector_file = open("vectorLayers.txt", "r")
-        vector_data = vector_file.read().split(', ')
-        vector_file.close()
-        
-        colour_file = open("color.txt", "r")
-        colour_data = colour_file.read().split(', ')
-        colour_file.close()
-        
-        #image1 = Image.open('Complex_Contour.png')
-        #image1_data = cls.pil2data(image1)
-        #print(image1_data)
-        
-        ########################################## --Test to split different colours in an image into its own image
-        imc = cv2.imread('testing.png')
-        imcv = cv2.bitwise_not(imc)
-        blue, green, red = cv2.split(imcv)
-           
-        blue_zeros = np.zeros(blue.shape, np.uint8)
-        green_zeros = np.zeros(green.shape, np.uint8)
-        red_zeros = np.zeros(red.shape, np.uint8)
- 
-        blueBGR = cv2.merge((blue,blue_zeros,blue_zeros))
-        greenBGR = cv2.merge((green_zeros,green,green_zeros))
-        redBGR = cv2.merge((red_zeros,red_zeros,red))
-           
-        im_blue = Image.fromarray(blueBGR)
-        im_blue.save('blue.png')
-        im_green = Image.fromarray(greenBGR)
-        im_green.save('green.png')
-        im_red = Image.fromarray(redBGR)
-        im_red.save('red.png')
-            
-            
-            
-        #redBGR.save("red.png")
-        #greenBGR.save("green.png")
-        #blueBGR.save("blue.png")
-            
-            
-
-        #new_image = r.convert('RGB')
-            
-        #new_image = Image.merge("RGB", (r_none, g, b_none))
-        #new_image.save("What_is_this.png")
-        #r.save("red_band.png")
-        #g.save("blue_band.png")
-        #.save("green_band.png")
-        #alpha.save("This_is.png")
-            
-        ###########################################
-        
-        image_arr = []
-        #print(len(vector_data))
-        for img_data in vector_data:
-            #print(img_data)
-            #this_image = Image.open(img_data)
-            img = cls.data2pil(img_data)
-            image_arr.append(raw_img(False, img, None))
-        
-        
-    
