@@ -10,13 +10,17 @@ from layers import Layers
 
 class combined_img():
 
-    def __init__(cls, image_array):
+    def __init__(cls, image_array, width, height):
         cls.image_array = image_array
+        
+        cls.img_width = width            #Original size of image is 1138 by 511 on Dell
+        cls.img_height = height
     
     @classmethod
-    def resize(cls, im):
+    def resize(cls, im, w, h):
         #width, height = im.size
-        newsize = (5690, 2555)
+        newsize = (w, h)
+        #newsize = (cls.img_width, cls.img_height)
         new_img = im.resize(newsize)
         return new_img
     
@@ -64,9 +68,9 @@ class combined_img():
                 '<svg version="1.1"' +
                 ' xmlns="http://www.w3.org/2000/svg"' +
                 ' xmlns:xling="http://www.w3.org/1999/xlink"' +
-                ' viewBox="0 0 %d %d">' % (5690, 2555) +
+                ' viewBox="0 0 %d %d">' % (self.img_width, self.img_height) +
                 '\n' +
-                self.get_background_xml(back_arr)
+                self.get_background_xml(back_arr)                                   #Get the background array data and put it in the xml
                 
             )
             parts = []
@@ -117,14 +121,26 @@ class combined_img():
 
         for image in layers.rasterList:
             pil_format = cls.data2pil(image)
-            resized_image = cls.resize(pil_format)
+            
+            width, height = pil_format.size
+            new_width = width*5
+            new_height = height*5
+            #print("width: " + str(new_width) + "height: " + str(new_height))
+            
+            resized_image = cls.resize(pil_format, new_width, new_height)
             image_arr.append(raw_img(False, resized_image, None))
         
         for image in layers.vectorList:
             #print(len(layers.vectorList))
             #print(image.color)
             pil_format = cls.data2pil(image.data)
-            resized_image = cls.resize(pil_format)
+            
+            width, height = pil_format.size
+            new_width = width*5
+            new_height = height*5
+            #print("width: " + str(new_width) + "height: " + str(new_height))
+            
+            resized_image = cls.resize(pil_format, new_width, new_height)
             vectorizable = cls.remove_transparency(resized_image)
             image_arr.append(raw_img(True, vectorizable, str(image.color)))
         
@@ -142,7 +158,7 @@ class combined_img():
         end_time = perf_counter()
         print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
 
-        inst = cls(image_arr)
+        inst = cls(image_arr, new_width, new_height)
         return inst
    
     @classmethod    
