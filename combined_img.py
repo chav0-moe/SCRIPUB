@@ -13,7 +13,7 @@ class combined_img():
     def __init__(cls, image_array, width, height):
         cls.image_array = image_array
         
-        cls.img_width = width            #Original size of image is 1138 by 511 on Dell
+        cls.img_width = width            #Original size of image is 1138 by 511 on Martin's device
         cls.img_height = height
     
     @classmethod
@@ -68,7 +68,7 @@ class combined_img():
                 '<svg version="1.1"' +
                 ' xmlns="http://www.w3.org/2000/svg"' +
                 ' xmlns:xling="http://www.w3.org/1999/xlink"' +
-                ' viewBox="0 0 %d %d">' % (self.img_width, self.img_height) +
+                ' viewBox="0 0 '+str(self.img_width)+' '+str(self.img_height)+'">' +
                 '\n' +
                 self.get_background_xml(back_arr)                                   #Get the background array data and put it in the xml
                 
@@ -95,16 +95,17 @@ class combined_img():
                     parts.append("z")
                 all_parts.append(parts)
             
-            
-            paths_to_write = ""                                             #Create the xml code for each individual vector path, colour included
-            for parts in all_parts:
+                                     
+            for parts in all_parts:                     #Create the xml code for each individual vector path, colour included
                 colour_value = parts[0]
                 del parts[0]
-                paths_to_write = ""
+                paths_to_write = []
                 for curr_string in parts:
-                    paths_to_write = paths_to_write + curr_string
+                    paths_to_write.append(curr_string)
                 
-                fp.write('<path stroke="none" fill="' + colour_value + '" fill-rule="evenodd" fill-opacity="1" d="%s"/> \n' % (paths_to_write))
+                join_write = "".join(paths_to_write)
+                #fp.write('<path stroke="none" fill="' + colour_value + '" fill-rule="evenodd" fill-opacity="1" d="%s"/> \n' % (join_write))
+                fp.write(f'<path stroke="none" fill="{colour_value}" fill-rule="evenodd" fill-opacity="1" d="{join_write}"/> \n')
             fp.write("</svg>")    
             
         
@@ -113,7 +114,8 @@ class combined_img():
         image_arr = []
         threads = []
         layers = Layers.from_carta(session)
-
+        
+        #x = 0                                                   #Saving images for testing
         for image in layers.rasterList:
             pil_format = cls.data2pil(image)
             
@@ -124,7 +126,11 @@ class combined_img():
             
             resized_image = cls.resize(pil_format, new_width, new_height)
             image_arr.append(raw_img(False, resized_image, None))
-        
+            #resized_image = resized_image.save("check_raster_image_"+str(x)+".png")
+            #x = x+1
+            
+            
+        #x = 0
         for image in layers.vectorList:
             #print(len(layers.vectorList))
             #print(image.color)
@@ -136,8 +142,10 @@ class combined_img():
             #print("width: " + str(new_width) + "height: " + str(new_height))
             
             resized_image = cls.resize(pil_format, new_width, new_height)
-            vectorizable = cls.remove_transparency(resized_image)
-            image_arr.append(raw_img(True, vectorizable, str(image.color)))
+            #vectorizable = cls.remove_transparency(resized_image)
+            image_arr.append(raw_img(True, resized_image, str(image.color)))
+            #resized_image = resized_image.save("check_vector_image_"+str(x)+".png")
+            #x = x+1
         
         start_time = perf_counter()
         for image in image_arr:
