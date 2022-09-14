@@ -5,59 +5,51 @@ import base64
 from raw_img import raw_img
 from PIL import Image
 from threading import Thread
-from time import sleep, perf_counter
 from layers import Layers
+
+#Sort variable names
 
 class combined_img():
 
-    def __init__(cls, image_array, width, height):
-        cls.image_array = image_array
-        
-        cls.img_width = width            #Original size of image is 1138 by 511 on Martin's device
-        cls.img_height = height
+    def __init__(self, raw_image_array, width, height):
+        self.raw_image_array = raw_image_array              #Array of raw_img objects
+        self.img_width = width            
+        self.img_height = height
     
-    @classmethod
-    def resize(cls, im, w, h):
-        #width, height = im.size
-        newsize = (w, h)
-        #newsize = (cls.img_width, cls.img_height)
-        new_img = im.resize(newsize)
+    def resize(im, w, h):                              #Expands the image, in order to improve the performace of the Potrace algorithm.
+        new_dimensions = (w, h)
+        new_img = im.resize(new_dimensions)
         return new_img
-    
-    @classmethod
-    def remove_transparency(cls, im):
+
+    def remove_transparency(im):                           #Removes transparency of image by placing a white background. CARTA now facilitates this.
         new_img = Image.new('RGBA', im.size, (255,255,255))
         new_img.paste(im, (0, 0), im)
         return new_img
-    
-    @classmethod
-    def pil2data(cls, img):                          #Converts PIL image to datauri
+
+    def pil2data(img):                          #Converts PIL image to datauri.
         data = BytesIO()
         img.save(data, "PNG")
         data64 = base64.b64encode(data.getvalue())
-        #return u'data:img/png;base64,'+data64.decode('utf-8')
         return data64.decode('utf-8')
-        
-    @classmethod
-    def data2pil(cls, data):                       #Converts datauri to a PIL image       
-        im_stream = io.BytesIO(data)    # convert image to file-like object 
-        img = Image.open(im_stream)   # img is now PIL Image object
-        return img
-        
-    @classmethod
-    def get_background_xml(cls, background_arr):       #Creates xml code for the png images to be embedded into the svg image
-        xml_lines = ""
-        for back_img in background_arr:
-            
-            back_data = cls.pil2data(back_img.img)
-            xml_lines = xml_lines + '<image xlink:href="'+u'data:img/png;base64,'+back_data+'" width="100%" height="100%" class="bg-image"/> \n'
-        
-        return xml_lines
 
-    def to_svg(self, file_name):     #Pass an output file name, a background image array (PIL images), and an array of vect_img objects to be vectorized and combined
+    def data2pil(data):                       #Converts datauri to a PIL image.
+        im_stream = io.BytesIO(data)               
+        img = Image.open(im_stream)                
+        return img
+
+    def get_background_xml(background_arr):       #Creates xml code for the png images to be embedded into the svg image.
+        xml_back_lines = ""
+        for back_img in background_arr:
+            back_data = combined_img.pil2data(back_img.img)
+            xml_back_lines = xml_back_lines + '<image xlink:href="'+u'data:img/png;base64,'+back_data+'" width="100%" height="100%" class="bg-image"/> \n'
+        return xml_back_lines
+
+    
+    def to_svg(self, file_name):     #Pass an output file name. Uses img_array instance to create svg image from the vector and raster images in that array.
         back_arr = []
         vect_arr = []
-        for img in self.image_array:
+        
+        for img in self.raw_image_array:                                            #Separate the vector and the raster images
             if img.bool_trace == True:
                 vect_arr.append(img)
             if img.bool_trace == False:
@@ -65,21 +57,20 @@ class combined_img():
         
         with open(file_name, "w") as fp:
             fp.write(
-                '<svg version="1.1"' +
+                '<svg version="1.1"' +                                                      #First line of xml to identify the file as an SVG image
                 ' xmlns="http://www.w3.org/2000/svg"' +
                 ' xmlns:xling="http://www.w3.org/1999/xlink"' +
                 ' viewBox="0 0 '+str(self.img_width)+' '+str(self.img_height)+'">' +
                 '\n' +
-                self.get_background_xml(back_arr)                                   #Get the background array data and put it in the xml
-                
+                combined_img.get_background_xml(back_arr)                                   #Get the background array data as xml and insert it into the xml file 
             )
+            
             all_parts =  []
             for image in vect_arr:                                                  #Loop through the vector path of each image, creating the path defenition "d" for each of them
                 parts = []
-                parts.append(image.colour)
+                parts.append(image.colour)                                          #Store the overlay compontents original colour as the first item
                 for curve in image.path:
                     fs = curve.start_point
-                    #print("Curve start: "+fs.x+" "+fs.y)
                     parts.append("M%f,%f" % (fs.x, fs.y))
                     for segment in curve.segments:
                         if segment.is_corner:
@@ -92,74 +83,59 @@ class combined_img():
                             b = segment.c2
                             c = segment.end_point
                             parts.append("C%f,%f %f,%f %f,%f" % (a.x, a.y, b.x, b.y, c.x, c.y))
-                    parts.append("z")
+                    parts.append("z")                                                               #Identifies the end of a vector path
                 all_parts.append(parts)
             
                                      
-            for parts in all_parts:                     #Create the xml code for each individual vector path, colour included
+            for parts in all_parts:                                             #Create the xml code for each individual vector path and its respective colour
                 colour_value = parts[0]
                 del parts[0]
-                paths_to_write = []
-                for curr_string in parts:
-                    paths_to_write.append(curr_string)
-                
-                join_write = "".join(paths_to_write)
-                #fp.write('<path stroke="none" fill="' + colour_value + '" fill-rule="evenodd" fill-opacity="1" d="%s"/> \n' % (join_write))
-                fp.write(f'<path stroke="none" fill="{colour_value}" fill-rule="evenodd" fill-opacity="1" d="{join_write}"/> \n')
+
+                paths_to_write = "".join(parts)
+                fp.write(f'<path stroke="none" fill="{colour_value}" fill-rule="evenodd" fill-opacity="1" d="{paths_to_write}"/> \n')   #XML line for each vector image
+            
             fp.write("</svg>")    
             
         
     @classmethod
-    def from_session(cls, session):  #Method that fetches the images from the session and stores them in an array of vect_img objects
-        image_arr = []
-        threads = []
-        layers = Layers.from_carta(session)
+    def from_session(cls, session):     #Method that fetches the images from the session and stores them in an array of vect_img objects
+        print("Running...")
         
-        #x = 0                                                   #Saving images for testing
-        for image in layers.rasterList:
-            pil_format = cls.data2pil(image)
+        expansion_factor = 5
+        raw_image_arr = []
+        potrace_threads = []
+        
+        layers = Layers.from_carta(session)                             #Exports the images as data from CARTA, storing them in the rasterList and vectorList attributes
+                                                  
+        for image in layers.rasterList:                                 
+            pil_format = combined_img.data2pil(image)                   #Convert image data to PIL image
             
-            width, height = pil_format.size
-            new_width = width*5
-            new_height = height*5
-            #print("width: " + str(new_width) + "height: " + str(new_height))
+            width, height = pil_format.size                             
+            new_width = width*expansion_factor
+            new_height = height*expansion_factor
+            resized_image = combined_img.resize(pil_format, new_width, new_height)  #Expand the image size
             
-            resized_image = cls.resize(pil_format, new_width, new_height)
-            image_arr.append(raw_img(False, resized_image, None))
-            #resized_image = resized_image.save("check_raster_image_"+str(x)+".png")
-            #x = x+1
+            raw_image_arr.append(raw_img(False, resized_image, None))   #Create raw_img object, with the trace flag = False and no original colour
             
-            
-        #x = 0
+
         for image in layers.vectorList:
-            #print(len(layers.vectorList))
-            #print(image.color)
-            pil_format = cls.data2pil(image.data)
+            pil_format = combined_img.data2pil(image.data)              #Convert image data to PIL image
             
-            width, height = pil_format.size
-            new_width = width*5
-            new_height = height*5
-            #print("width: " + str(new_width) + "height: " + str(new_height))
+            width, height = pil_format.size                             
+            new_width = width*expansion_factor
+            new_height = height*expansion_factor
+            resized_image = combined_img.resize(pil_format, new_width, new_height)  #Expand the image size
             
-            resized_image = cls.resize(pil_format, new_width, new_height)
-            #vectorizable = cls.remove_transparency(resized_image)
-            image_arr.append(raw_img(True, resized_image, str(image.color)))
-            #resized_image = resized_image.save("check_vector_image_"+str(x)+".png")
-            #x = x+1
+            raw_image_arr.append(raw_img(True, resized_image, str(image.color)))    #Create raw_img object, with the trace flag = True and with an original colour that will be added back
         
-        start_time = perf_counter()
-        for image in image_arr:
-                if image.bool_trace == True:
+        for image in raw_image_arr:                                     
+                if image.bool_trace == True:                                #Create multiple threads to generate the path objects for each raw_img.
                     t = Thread(target=image.get_path)
-                    #print("Created new thread")
-                    threads.append(t)
+                    potrace_threads.append(t)
                     t.start()
             
-        for t in threads:
+        for t in potrace_threads:                                           #Wait for all threads to finish
             t.join()
             
-        end_time = perf_counter()
-        print(f'It took {end_time- start_time: 0.2f} seconds to complete.')
-
-        inst = cls(image_arr, new_width, new_height)
+        inst = cls(raw_image_arr, new_width, new_height)                    #Create and return combined_img instance to user
         return inst
